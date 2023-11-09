@@ -1,7 +1,16 @@
 import os
 import glob
 import json
+import string
 
+from bs4 import BeautifulSoup
+import nltk
+nltk.download('punkt')
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+nltk.download('stopwords')
+
+develop = True
 
 def get_files_in_folder(folder_path, file_extension='json'):
     files = []
@@ -12,11 +21,28 @@ def get_files_in_folder(folder_path, file_extension='json'):
     return files
 
 
-def parse_document(document):
-    # This function can be customized to tokenize and process your documents.
-    # For simplicity, we split the document content by whitespace.
-    tokens = document.split()
-    return list(set(tokens))  # Remove duplicates
+def parse_document(file):
+    data = json.load(file)
+    content = data['content']
+
+    soup = BeautifulSoup(content, "lxml")
+
+
+    if soup.find('title') is None:
+        # if the page doesn't have a title, don't bother processing it
+        if develop: print("The page is incomplete or missing a title element")
+        return []
+
+    words = soup.get_text().lower()
+    stopword_set = set(stopwords.words('english'))
+
+    words_list = word_tokenize(words)
+    filtered_words_list = [w for w in words_list if not w.lower() in stopword_set and len(w) > 1 and all(
+        char not in string.punctuation for char in w)]
+
+
+    # tokens = document.split()
+    return list()  # Remove duplicates
 
 
 def build_index(folder_path, output_file):
@@ -27,8 +53,8 @@ def build_index(folder_path, output_file):
 
     for file_path in get_files_in_folder(folder_path):
         with open(file_path, 'r', encoding='utf-8') as file:
-            content = file.read()
-            tokens = parse_document(content)
+            # content = file.read()
+            tokens = parse_document(file)
             for token in tokens:
                 if token not in inverted_index:
                     inverted_index[token] = []
@@ -50,7 +76,7 @@ def build_index(folder_path, output_file):
 
 
 if __name__ == '__main__':
-    folder_path = ''  # Replace with the folder path you want to index
+    folder_path = 'ANALYST/www-db_ics_uci_edu/'  # Replace with the folder path you want to index
     output_file = 'inverted_index.json'
 
     # Ensure the output file starts empty
