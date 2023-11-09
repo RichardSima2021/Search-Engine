@@ -11,7 +11,9 @@ from nltk.corpus import stopwords
 nltk.download('stopwords')
 
 develop = True
-
+unique_words = set()
+doc_id = 1
+block_id = 1
 def get_files_in_folder(folder_path, file_extension='json'):
     files = []
     for root, _, filenames in os.walk(folder_path):
@@ -42,44 +44,59 @@ def parse_document(file):
 
 
     # tokens = document.split()
-    return list()  # Remove duplicates
+    return filtered_words_list  # Remove duplicates
 
 
-def build_index(folder_path, output_file):
-    inverted_index = {}
-    batch_size = 100  # Adjust the batch size as needed
-    batch = []
-    doc_id = 0
+def write_block(indices):
+    global block_id
+    output_file = f'index-blocks/inverted_index-{block_id}.txt'
+    sorted_indices = sorted(inverted_index.items(), key=lambda x: x[0])
+    with open(output_file, 'w') as output:
+        for pair in sorted_indices:
+            output.write(f'{pair}\n')
+    output.close()
+    block_id += 1
+
+def build_index(folder_path):
+
+    inverted_index = dict()
+    batch_limit = 5  # Adjust the batch size as needed
+    current_batch = 1
+    global doc_id
+    global block_id
 
     for file_path in get_files_in_folder(folder_path):
         with open(file_path, 'r', encoding='utf-8') as file:
+            file_name = os.path.splitext(os.path.basename(file_path))[0]
+            # print(file_name)
             # content = file.read()
             tokens = parse_document(file)
+            # print(tokens)
             for token in tokens:
                 if token not in inverted_index:
                     inverted_index[token] = []
+
+                if token not in unique_words:
+                    unique_words.add(token)
                 inverted_index[token].append(doc_id)
 
         doc_id += 1
+        current_batch += 1
+        print(doc_id, current_batch)
 
-        if len(batch) >= batch_size:
-            with open(output_file, 'a') as output:
-                json.dump(inverted_index, output)
-                output.write('\n')
+        if current_batch == batch_limit:
+            current_batch = 1
+            write_block(inverted_index)
             inverted_index.clear()
 
     # Write the remaining index to the output file
     if inverted_index:
-        with open(output_file, 'a') as output:
-            json.dump(inverted_index, output)
-            output.write('\n')
+        block_id += 1
+        write_block(inverted_index)
+        inverted_index.clear()
 
 
 if __name__ == '__main__':
-    folder_path = 'ANALYST/www-db_ics_uci_edu/'  # Replace with the folder path you want to index
-    output_file = 'inverted_index.json'
+    folder_path = 'ANALYST/www-db_ics_uci_edu/'
 
-    # Ensure the output file starts empty
-    open(output_file, 'w').close()
-
-    build_index(folder_path, output_file)
+    build_index(folder_path)
