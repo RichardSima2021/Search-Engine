@@ -27,6 +27,10 @@ def parse_document(file):
     data = json.load(file)
     content = data['content']
 
+    if data['encoding'] != 'utf-8':
+        # not too sure what to do with non utf8 yet
+        return []
+
     soup = BeautifulSoup(content, "lxml")
 
 
@@ -50,17 +54,21 @@ def parse_document(file):
 def write_block(indices):
     global block_id
     output_file = f'index-blocks/inverted_index-{block_id}.txt'
-    sorted_indices = sorted(inverted_index.items(), key=lambda x: x[0])
+    sorted_indices = sorted(indices.items(), key=lambda x: x[0])
     with open(output_file, 'w') as output:
         for pair in sorted_indices:
-            output.write(f'{pair}\n')
+            try:
+                output.write(f'{pair}\n')
+            except Exception as e:
+                print(f'An error occurred while writing, {e}')
+
     output.close()
     block_id += 1
 
 def build_index(folder_path):
 
     inverted_index = dict()
-    batch_limit = 5  # Adjust the batch size as needed
+    batch_limit = 500  # Adjust the batch size as needed
     current_batch = 1
     global doc_id
     global block_id
@@ -82,7 +90,7 @@ def build_index(folder_path):
 
         doc_id += 1
         current_batch += 1
-        print(doc_id, current_batch)
+        print(doc_id)
 
         if current_batch == batch_limit:
             current_batch = 1
@@ -91,12 +99,11 @@ def build_index(folder_path):
 
     # Write the remaining index to the output file
     if inverted_index:
-        block_id += 1
         write_block(inverted_index)
         inverted_index.clear()
 
 
 if __name__ == '__main__':
-    folder_path = 'ANALYST/www-db_ics_uci_edu/'
+    folder_path = 'ANALYST/www_informatics_uci_edu/'
 
     build_index(folder_path)
