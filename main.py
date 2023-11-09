@@ -55,7 +55,7 @@ def write_block(indices):
     global block_id
     output_file = f'index-blocks/inverted_index-{block_id}.txt'
     sorted_indices = sorted(indices.items(), key=lambda x: x[0])
-    with open(output_file, 'w') as output:
+    with open(output_file, 'w', encoding='utf-8') as output:
         for pair in sorted_indices:
             try:
                 output.write(f'{pair}\n')
@@ -104,6 +104,9 @@ def build_index(folder_path):
 
 
 if __name__ == '__main__':
-    folder_path = 'ANALYST/www_informatics_uci_edu/'
+    index_blocks_path = './index-blocks'
+    if not os.path.exists(index_blocks_path):
+        os.makedirs(index_blocks_path)
 
+    folder_path = 'ANALYST/www_informatics_uci_edu/'
     build_index(folder_path)
