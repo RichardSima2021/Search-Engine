@@ -2,7 +2,6 @@ import os
 import heapq
 import ast
 def binary_merge(files):
-    max_heap_size_bytes = 2 * 1024 * 1024
     # 打开所有文件
     file_handles = [open(file, 'r') for file in files]
     words_file = ["" for file in files]
@@ -71,13 +70,15 @@ def binary_merge(files):
             merged_file.write(f"{current_word}\t{current_ids}\n")
 
             # 从相应文件读取下一行
-            line = file_handles[file_index].readline().strip()
-            if line:
-                result_tuple = ast.literal_eval(line)
-                # Extracting the components from the tuple
-                word = result_tuple[0]
-                ids = result_tuple[1]
-                heapq.heappush(heap, (word, ids, file_index))
+            for i, file_handle in enumerate(file_handles):
+                line = file_handle.readline().strip()
+                if line:
+                    result_tuple = ast.literal_eval(line)
+                    # Extracting the components from the tuple
+                    word = result_tuple[0]
+                    ids = result_tuple[1]
+                    heapq.heappush(heap, (word, ids, i))
+                    words_file[i] = word
 
     # 关闭所有文件
     for file_handle in file_handles:
