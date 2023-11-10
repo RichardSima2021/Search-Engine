@@ -2,13 +2,14 @@ import os
 import glob
 import json
 import string
-
+import merge
 from bs4 import BeautifulSoup
 import nltk
 nltk.download('punkt')
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 nltk.download('stopwords')
+import time
 
 develop = True
 unique_words = set()
@@ -21,6 +22,7 @@ def get_files_in_folder(folder_path, file_extension='json'):
             if filename.endswith(f".{file_extension}"):
                 files.append(os.path.join(root, filename))
     return files
+
 
 
 def parse_document(file):
@@ -68,7 +70,7 @@ def write_block(indices):
 def build_index(folder_path):
 
     inverted_index = dict()
-    batch_limit = 500  # Adjust the batch size as needed (note: 2000)
+    batch_limit = 2500  # Adjust the batch size as needed (note: 2000)
     current_batch = 1
     global doc_id
     global block_id
@@ -104,9 +106,33 @@ def build_index(folder_path):
 
 
 if __name__ == '__main__':
+    starttime = time.time() 
+
+    # Set the path for storing index blocks
     index_blocks_path = './index-blocks'
     if not os.path.exists(index_blocks_path):
         os.makedirs(index_blocks_path)
 
-    folder_path = 'ANALYST'
+    # downloaded folder
+    folder_path = 'DEV'
+
+    # Build the inverted index 
     build_index(folder_path)
+
+    # Get the list of index block files
+    index_files = get_files_in_folder("index-blocks", "txt")
+
+    # Perform binary merge on the index block files
+    merge.binary_merge(index_files)
+
+    #Report
+    endtime = time.time()  
+    runtime = endtime - starttime
+    documents = doc_id - 1
+    num_unique_words = len(unique_words)
+    total_size_kb = sum(os.path.getsize(file) for file in index_files) / 1024
+    print(f"Number of indexed documents: {documents}")
+    print(f"Number of unique words: {num_unique_words}")
+    print(f"Total size of the index on disk: {total_size_kb:.2f} KB")
+    print(f"Total runtime: {runtime:.6f} seconds")
+
