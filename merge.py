@@ -1,17 +1,15 @@
 import os
 import heapq
 import ast
-import sys
 def binary_merge(files):
     max_heap_size_bytes = 2 * 1024 * 1024
     # 打开所有文件
     file_handles = [open(file, 'r') for file in files]
-
+    words_file = ["" for file in files]
     # 使用堆来进行二进制合并
     heap = []
 
     # 初始化堆
-    current_size_bytes = 0
     start_word = ""
     for i, file_handle in enumerate(file_handles):
         if i == 0:
@@ -21,9 +19,8 @@ def binary_merge(files):
                 # Extracting the components from the tuple
                 word = result_tuple[0]
                 ids = result_tuple[1]
-                entry_size_bytes = sys.getsizeof(result_tuple)
                 heapq.heappush(heap, (word, ids, i))
-                current_size_bytes += entry_size_bytes
+                words_file[i] = word
             start_word = word
         else:
             word = ""
@@ -33,13 +30,11 @@ def binary_merge(files):
                 # Extracting the components from the tuple
                 word = result_tuple[0]
                 ids = result_tuple[1]
-                entry_size_bytes = sys.getsizeof(result_tuple)
-                if current_size_bytes + entry_size_bytes <= max_heap_size_bytes:
-                    heapq.heappush(heap, (word, ids, i))
-                    current_size_bytes += entry_size_bytes
-                else:
-                    print("exceeded in size")
-                    break
+                words_file[i] = word
+                heapq.heappush(heap, (word, ids, i))
+                if len(heap) >= 500:
+                        print("exceeded in size")
+                        break
             while word <= start_word:
                 line = file_handle.readline().strip()
                 if line:
@@ -47,19 +42,29 @@ def binary_merge(files):
                     # Extracting the components from the tuple
                     word = result_tuple[0]
                     ids = result_tuple[1]
-                    entry_size_bytes = sys.getsizeof(result_tuple)
-                    if current_size_bytes + entry_size_bytes <= max_heap_size_bytes:
-                        heapq.heappush(heap, (word, ids, i))
-                        current_size_bytes += entry_size_bytes
-                    else:
+                    words_file[i] = word
+                    heapq.heappush(heap, (word, ids, i))
+                    if len(heap) >= 500:
                         print("exceeded in size")
                         break
-    print(heap)
-    return
     # 执行二进制合并
     with open('merged_output.txt', 'w') as merged_file:
         while heap:
             current_word, current_ids, file_index = heapq.heappop(heap)
+            
+            for index, word in enumerate(words_file):
+                if word <= start_word:
+                    while word <= start_word and word != "":
+                        line = file_handles[index].readline().strip()
+                        if line:
+                            result_tuple = ast.literal_eval(line)
+                            # Extracting the components from the tuple
+                            word = result_tuple[0]
+                            ids = result_tuple[1]
+                            words_file[i] = word
+                            heapq.heappush(heap, (word, ids, i))
+                        else:
+                            word = ""
             while heap and heap[0][0] == current_word:
                 _, other_ids, _ = heapq.heappop(heap)
                 current_ids.extend(other_ids)
