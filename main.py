@@ -68,7 +68,7 @@ def write_block(indices):
 def build_index(folder_path):
 
     inverted_index = dict()
-    batch_limit = 500  # Adjust the batch size as needed
+    batch_limit = 500  # Adjust the batch size as needed (note: 2000)
     current_batch = 1
     global doc_id
     global block_id
@@ -108,5 +108,5 @@ if __name__ == '__main__':
     if not os.path.exists(index_blocks_path):
         os.makedirs(index_blocks_path)
 
-    folder_path = 'ANALYST/www_informatics_uci_edu/'
+    folder_path = 'ANALYST'
     build_index(folder_path)
