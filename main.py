@@ -45,8 +45,11 @@ def parse_document(file):
     stopword_set = set(stopwords.words('english'))
 
     words_list = word_tokenize(words)
-    filtered_words_list = [w for w in words_list if not w.lower() in stopword_set and len(w) > 1 and all(
-        char not in string.punctuation for char in w)]
+    filtered_words_list = [
+    w 
+    for w in words_list 
+    if len(w) > 1 and all(char not in string.punctuation for char in w)
+]
 
 
     # tokens = document.split()
