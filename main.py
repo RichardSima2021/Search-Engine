@@ -3,6 +3,7 @@ import glob
 import json
 import string
 import merge
+import search
 from bs4 import BeautifulSoup
 import nltk
 nltk.download('punkt')
@@ -51,9 +52,14 @@ def parse_document(file):
     if len(w) > 1 and all(char not in string.punctuation for char in w)
 ]
 
-
+    # parse_document 需要改的地方，for url
+    # url = data.get('url', '')
+    
     # tokens = document.split()
-    return filtered_words_list  # Remove duplicates
+    return filtered_words_list
+
+    # parse_document 需要改的地方，for url
+    #return filtered_words_list,url  # Remove duplicates
 
 
 def write_block(indices):
@@ -83,7 +89,13 @@ def build_index(folder_path):
             file_name = os.path.splitext(os.path.basename(file_path))[0]
             # print(file_name)
             # content = file.read()
+           
             tokens = parse_document(file)
+            
+            # build index 需要改的地方，for url
+            # tokens, url = parse_document(file)      
+            # url_mapping[doc_id] = url
+            
             # print(tokens)
             for token in tokens:
                 if token not in inverted_index:
@@ -106,36 +118,55 @@ def build_index(folder_path):
     if inverted_index:
         write_block(inverted_index)
         inverted_index.clear()
+    
+    # build index 需要改的地方，for url
+   #return url_mapping
+
 
 
 if __name__ == '__main__':
-    starttime = time.time() 
+    # starttime = time.time() 
 
-    # Set the path for storing index blocks
-    index_blocks_path = './index-blocks'
-    if not os.path.exists(index_blocks_path):
-        os.makedirs(index_blocks_path)
+    # # Set the path for storing index blocks
+    # index_blocks_path = './index-blocks'
+    # if not os.path.exists(index_blocks_path):
+    #     os.makedirs(index_blocks_path)
 
-    # downloaded folder
-    folder_path = 'DEV'
+    # # downloaded folder
+    # folder_path = 'DEV'
 
-    # Build the inverted index 
-    build_index(folder_path)
+    # # Build the inverted index 
+    # build_index(folder_path)
 
-    # Get the list of index block files
-    index_files = get_files_in_folder("index-blocks", "txt")
+    # # Get the list of index block files
+    # index_files = get_files_in_folder("index-blocks", "txt")
 
-    # Perform binary merge on the index block files
-    merge.binary_merge(index_files)
+    # # Perform binary merge on the index block files
+    # merge.binary_merge(index_files)
 
-    #Report
-    endtime = time.time()  
-    runtime = endtime - starttime
-    documents = doc_id - 1
-    num_unique_words = len(unique_words)
-    total_size_kb = sum(os.path.getsize(file) for file in index_files) / 1024
-    print(f"Number of indexed documents: {documents}")
-    print(f"Number of unique words: {num_unique_words}")
-    print(f"Total size of the index on disk: {total_size_kb:.2f} KB")
-    print(f"Total runtime: {runtime:.6f} seconds")
 
+    # #Report
+    # endtime = time.time()  
+    # runtime = endtime - starttime
+    # documents = doc_id - 1
+    # num_unique_words = len(unique_words)
+    # total_size_kb = sum(os.path.getsize(file) for file in index_files) / 1024
+    # print(f"Number of indexed documents: {documents}")
+    # print(f"Number of unique words: {num_unique_words}")
+    # print(f"Total size of the index on disk: {total_size_kb:.2f} KB")
+    # print(f"Total runtime: {runtime:.6f} seconds")
+
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+
+    merged_output_path = os.path.join(script_dir, 'merged_output.txt')
+
+    inverted_index = search.read_inverted_index(merged_output_path)
+
+    user_query = input("Enter your search query: ")
+    
+    # main 需要改的地方，for url
+    # document_mapping = build_index(folder_path)
+    # print(f"URLSSSSS for: {document_mapping}")
+    # result_documents = search.search(user_query, inverted_index,document_mapping)
+
+    result_documents = search.search(user_query, inverted_index)
