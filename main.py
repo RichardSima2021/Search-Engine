@@ -2,6 +2,7 @@ import os
 import glob
 import json
 import string
+from urllib.parse import urlparse, urlunparse
 import merge
 import search
 from bs4 import BeautifulSoup
@@ -25,42 +26,39 @@ def get_files_in_folder(folder_path, file_extension='json'):
     return files
 
 
-
 def parse_document(file):
     data = json.load(file)
     content = data['content']
 
     if data['encoding'] != 'utf-8':
         # not too sure what to do with non utf8 yet
-        return []
+        return [], ''
 
     soup = BeautifulSoup(content, "lxml")
-
 
     if soup.find('title') is None:
         # if the page doesn't have a title, don't bother processing it
         if develop: print("The page is incomplete or missing a title element")
-        return []
+        return [], ''
 
     words = soup.get_text().lower()
     stopword_set = set(stopwords.words('english'))
 
     words_list = word_tokenize(words)
     filtered_words_list = [
-    w 
-    for w in words_list 
-    if len(w) > 1 and all(char not in string.punctuation for char in w)
-]
+        w
+        for w in words_list
+        if len(w) > 1 and all(char not in string.punctuation for char in w)
+    ]
 
     # parse_document 需要改的地方，for url
-    # url = data.get('url', '')
-    
-    # tokens = document.split()
-    return filtered_words_list
-
+    url = data.get('url', '')
+    parsed_url = urlparse(url)
+    url_without_fragment = parsed_url._replace(fragment='').geturl()
+    print(url_without_fragment)
+    # return filtered_words_list
     # parse_document 需要改的地方，for url
-    #return filtered_words_list,url  # Remove duplicates
-
+    return filtered_words_list, url_without_fragment
 
 def write_block(indices):
     global block_id
@@ -77,8 +75,9 @@ def write_block(indices):
     block_id += 1
 
 def build_index(folder_path):
-
+    global url_mapping
     inverted_index = dict()
+    url_mapping = dict()
     batch_limit = 2500  # Adjust the batch size as needed (note: 2000)
     current_batch = 1
     global doc_id
@@ -87,16 +86,11 @@ def build_index(folder_path):
     for file_path in get_files_in_folder(folder_path):
         with open(file_path, 'r', encoding='utf-8') as file:
             file_name = os.path.splitext(os.path.basename(file_path))[0]
-            # print(file_name)
-            # content = file.read()
-           
-            tokens = parse_document(file)
-            
+
             # build index 需要改的地方，for url
-            # tokens, url = parse_document(file)      
-            # url_mapping[doc_id] = url
-            
-            # print(tokens)
+            tokens, url = parse_document(file)
+            url_mapping[doc_id] = url
+
             for token in tokens:
                 if token not in inverted_index:
                     inverted_index[token] = []
@@ -118,43 +112,44 @@ def build_index(folder_path):
     if inverted_index:
         write_block(inverted_index)
         inverted_index.clear()
-    
+
     # build index 需要改的地方，for url
-   #return url_mapping
+    return url_mapping
 
 
 
 if __name__ == '__main__':
-    # starttime = time.time() 
+    starttime = time.time() 
 
-    # # Set the path for storing index blocks
-    # index_blocks_path = './index-blocks'
-    # if not os.path.exists(index_blocks_path):
-    #     os.makedirs(index_blocks_path)
+    # Set the path for storing index blocks
+    index_blocks_path = './index-blocks'
+    if not os.path.exists(index_blocks_path):
+        os.makedirs(index_blocks_path)
 
-    # # downloaded folder
-    # folder_path = 'DEV'
+    # downloaded folder
+    folder_path = 'DEV'
 
-    # # Build the inverted index 
-    # build_index(folder_path)
+    # Build the inverted index 
+    document_mapping = build_index(folder_path)
+    #build_index(folder_path)
 
-    # # Get the list of index block files
-    # index_files = get_files_in_folder("index-blocks", "txt")
+    # Get the list of index block files
+    index_files = get_files_in_folder("index-blocks", "txt")
 
-    # # Perform binary merge on the index block files
-    # merge.binary_merge(index_files)
+    # Perform binary merge on the index block files
+    merge.binary_merge(index_files)
 
 
-    # #Report
-    # endtime = time.time()  
-    # runtime = endtime - starttime
-    # documents = doc_id - 1
-    # num_unique_words = len(unique_words)
-    # total_size_kb = sum(os.path.getsize(file) for file in index_files) / 1024
-    # print(f"Number of indexed documents: {documents}")
-    # print(f"Number of unique words: {num_unique_words}")
-    # print(f"Total size of the index on disk: {total_size_kb:.2f} KB")
-    # print(f"Total runtime: {runtime:.6f} seconds")
+    #Report
+    endtime = time.time()  
+    runtime = endtime - starttime
+    documents = doc_id - 1
+    num_unique_words = len(unique_words)
+    total_size_kb = sum(os.path.getsize(file) for file in index_files) / 1024
+    print(f"Number of indexed documents: {documents}")
+    print(f"Number of unique words: {num_unique_words}")
+    print(f"Total size of the index on disk: {total_size_kb:.2f} KB")
+    print(f"Total runtime: {runtime:.6f} seconds")
 
     script_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -166,7 +161,7 @@ if __name__ == '__main__':
     
     # main 需要改的地方，for url
     # document_mapping = build_index(folder_path)
-    # print(f"URLSSSSS for: {document_mapping}")
-    # result_documents = search.search(user_query, inverted_index,document_mapping)
+    print(f"URLSSSSS for: {document_mapping}")
+    result_documents = search.search(user_query, inverted_index,document_mapping)
 
-    result_documents = search.search(user_query, inverted_index)
+    #result_documents = search.search(user_query, inverted_index)
