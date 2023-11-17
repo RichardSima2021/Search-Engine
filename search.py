@@ -12,6 +12,19 @@ def read_inverted_index(file_path):
             inverted_index[word] = doc_ids
     return inverted_index
 
+def read_inverted_index_position(file_path):
+    print(f"File Path: {file_path}")
+    phrase_position_map = {}
+    with open(file_path, 'r', encoding='utf-8') as file:
+        position = file.tell()
+        line = file.readline()
+        while line:
+            word, positions_str = line.strip().split('\t')
+            phrase_position_map[word] = position
+            # Move the file pointer to the next line and update the position
+            position = file.tell()
+            line = file.readline()
+    return phrase_position_map
 
 
 import math
@@ -23,7 +36,7 @@ def calculate_tf_idf(document_freq, total_documents):
 
 
 
-def search(query, inverted_index, document_mapping):
+def search(query, inverted_index, document_mapping, file_path):
     query_words = query.split()
     
     # document IDs and occurrences for each word in the query
@@ -31,18 +44,21 @@ def search(query, inverted_index, document_mapping):
     total_id=0
 
     # Iterate through each word in the query
-    for word in query_words:
-        if word in inverted_index:
-            doc_ids = inverted_index[word]
-            print(f"Word: {word}, ids {doc_ids}")
+    with open(file_path, 'r', encoding = 'utf-8') as file:
+        for word in query_words:
+            if word in inverted_index:
+                file.seek(inverted_index[word])
+                line = file.readline()
+                word, ids_str = line.strip().split('\t')
+                doc_ids = ast.literal_eval(ids_str)
 
-            for doc_id in doc_ids: 
-                total_id +=1
-                if doc_id not in result_dict:
-                    result_dict[doc_id] = 1
-                else:
-                    # Increment the count for the current doc_id
-                    result_dict[doc_id] += 1
+                for doc_id in doc_ids: 
+                    total_id +=1
+                    if doc_id not in result_dict:
+                        result_dict[doc_id] = 1
+                    else:
+                        # Increment the count for the current doc_id
+                        result_dict[doc_id] += 1
 
 
     scores = {}
@@ -55,7 +71,6 @@ def search(query, inverted_index, document_mapping):
     for i in range(min(5, len(sorted_doc_ids))):
         doc_id = sorted_doc_ids[i]
         score = scores[doc_id]
-        print(f"Document ID: {doc_id}, Score: {score}")
         urls = [document_mapping.get(doc_id, f"URL not found for document {doc_id}")]
         print(f"Rank: {i}, Url: {urls}")
 
