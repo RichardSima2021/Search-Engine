@@ -179,6 +179,9 @@ if __name__ == '__main__':
     runtime = endtime - starttime
     while True:
         user_query = input("Enter your search query: ")
-
+        starttime = time.time()
         # print(inverted_index)
-        result_documents = search.position_search(user_query, inverted_index,url_mapping, merged_output_path)    #result_documents = search.search(user_query, inverted_index)
+        result_documents = search.search(user_query, inverted_index,url_mapping, merged_output_path)    #result_documents = search.search(user_query, inverted_index)
+        endtime = time.time()  
+        runtime = endtime - starttime
+        print(f'Search time: {runtime}')
