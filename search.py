@@ -1,5 +1,9 @@
 
 import ast
+import nltk
+from nltk.corpus import stopwords
+nltk.download('stopwords')
+stop_words = set(stopwords.words('english'))
 
 #: returned a dictionary of the inverted index 
 def read_inverted_index(file_path):
@@ -38,10 +42,14 @@ def calculate_tf_idf(document_freq, total_documents):
 
 def search(query, inverted_index, document_mapping, file_path):
     query_words = query.split()
+    query_words = [word.lower() for word in query_words]
     
     # document IDs and occurrences for each word in the query
     result_dict = {}
     total_id=0
+    if len(query_words) > 2:
+        query_words = [word for word in query_words if word.lower() not in stop_words]
+
 
     # Iterate through each word in the query
     with open(file_path, 'r', encoding = 'utf-8') as file:
