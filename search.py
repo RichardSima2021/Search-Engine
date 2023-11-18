@@ -76,12 +76,22 @@ def search(query, inverted_index, document_mapping, file_path):
     
     sorted_doc_ids = sorted(scores, key=scores.get, reverse=True)
 
-    for i in range(min(5, len(sorted_doc_ids))):
+
+    unique_urls = set()
+
+    unique_urls_printed = 0
+
+
+    for i in range(len(sorted_doc_ids)):
+        if unique_urls_printed >= 5:
+            break  
+
         doc_id = sorted_doc_ids[i]
         score = scores[doc_id]
-        urls = [document_mapping.get(doc_id, f"URL not found for document {doc_id}")]
-        print(f"Rank: {i}, Url: {urls}")
+        url = document_mapping.get(doc_id, f"URL not found for document {doc_id}")
 
 
-
-        
+        if url not in unique_urls:
+            unique_urls.add(url)
+            print(f"Rank: {unique_urls_printed + 1}, URL: {url}")
+            unique_urls_printed += 1
