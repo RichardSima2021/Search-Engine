@@ -1,13 +1,12 @@
 import ast
 import nltk
 from nltk.corpus import stopwords
-from nltk import pos_tag
 import math
 nltk.download('averaged_perceptron_tagger')
 from nltk.stem import PorterStemmer
 nltk.download('stopwords')
 stop_words = set(stopwords.words('english'))
-
+from spellchecker import SpellChecker
 
 #: returned a dictionary of the inverted index
 def read_inverted_index(file_path):
@@ -59,15 +58,22 @@ def calculate_tf_idf(document_freq, total_documents, term_weight=1.0):
 def search(query, inverted_index, document_mapping, file_path):
    query_words = query.split()
 
+
    query_words = {word.lower() for word in query_words if word.lower() not in stop_words}
 
+    # Initialize SpellChecker
+   spell = SpellChecker()
 
-   if len(query_words) > 2:
-       query_words = [word for word in query_words if word.lower() not in stop_words]
+    # Correct spelling for words in query_words
+   corrected_words = {spell.correction(word) for word in query_words}
+
+
+#    if len(query_words) > 2:
+#        query_words = [word for word in query_words if word.lower() not in stop_words]
 
 
   # important_words = determine_important_words(query)
-   print(f" query_words: {query_words}")
+   print(f" query_words after correction: {corrected_words }")
 
    result_dict = {}
    total_id = 0
@@ -75,7 +81,7 @@ def search(query, inverted_index, document_mapping, file_path):
 
 
    with open(file_path, 'r', encoding='utf-8') as file:
-       for word in query_words:
+       for word in corrected_words:
            if word in inverted_index:
                file.seek(inverted_index[word])
                line = file.readline()
