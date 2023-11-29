@@ -8,6 +8,8 @@ from nltk.stem import PorterStemmer
 nltk.download('stopwords')
 stop_words = set(stopwords.words('english'))
 from spellchecker import SpellChecker
+import time
+import re
 
 #: returned a dictionary of the inverted index
 def read_inverted_index(file_path):
@@ -65,11 +67,14 @@ def search(query, inverted_index, document_mapping, file_path):
    if len(query_words) > 2:
        query_words = [word for word in query_words if word.lower() not in stop_words]
 
+   if all(word in stop_words for word in your_words)
     # Initialize SpellChecker
    spell = SpellChecker()
 
     # Correct spelling for words in query_words
    corrected_words = {spell.correction(word) for word in query_words}
+
+   
 
 
   # important_words = determine_important_words(query)
@@ -80,14 +85,18 @@ def search(query, inverted_index, document_mapping, file_path):
    common_doc_ids = set()  # Initialize an empty set for common document IDs
 
 
+      
    with open(file_path, 'r', encoding='utf-8') as file:
        for word in corrected_words:
            if word in inverted_index:
                file.seek(inverted_index[word])
+  
                line = file.readline()
+
                word, ids_str = line.strip().split('\t')
-               doc_ids = ast.literal_eval(ids_str)
-                    
+
+               doc_ids = [int(part) for part in re.split(r'\D+', ids_str) if part]
+    
 
                if not common_doc_ids:
                     # If common_doc_ids is empty, add all document IDs for the first word
@@ -95,12 +104,10 @@ def search(query, inverted_index, document_mapping, file_path):
                else:
                     # Update common_doc_ids with the intersection of current doc_ids
                     common_doc_ids.intersection_update(doc_ids)
-
                for doc_id in doc_ids:
                     total_id += 1
                     result_dict[doc_id] = result_dict.get(doc_id, 0) + 1
-
-
+               
    scores = {}
    for doc_id, doc_counts in result_dict.items():
 
