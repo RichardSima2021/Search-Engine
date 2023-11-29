@@ -1,4 +1,5 @@
 import ast
+from collections import Counter
 import nltk
 from nltk.corpus import stopwords
 import math
@@ -59,17 +60,16 @@ def search(query, inverted_index, document_mapping, file_path):
    query_words = query.split()
 
 
-   query_words = {word.lower() for word in query_words if word.lower() not in stop_words}
+   query_words = {word.lower() for word in query_words}
+
+   if len(query_words) > 2:
+       query_words = [word for word in query_words if word.lower() not in stop_words]
 
     # Initialize SpellChecker
    spell = SpellChecker()
 
     # Correct spelling for words in query_words
    corrected_words = {spell.correction(word) for word in query_words}
-
-
-#    if len(query_words) > 2:
-#        query_words = [word for word in query_words if word.lower() not in stop_words]
 
 
   # important_words = determine_important_words(query)
@@ -87,7 +87,8 @@ def search(query, inverted_index, document_mapping, file_path):
                line = file.readline()
                word, ids_str = line.strip().split('\t')
                doc_ids = ast.literal_eval(ids_str)
-                
+                    
+
                if not common_doc_ids:
                     # If common_doc_ids is empty, add all document IDs for the first word
                     common_doc_ids.update(doc_ids)
@@ -95,14 +96,9 @@ def search(query, inverted_index, document_mapping, file_path):
                     # Update common_doc_ids with the intersection of current doc_ids
                     common_doc_ids.intersection_update(doc_ids)
 
-
-
                for doc_id in doc_ids:
-                   total_id += 1
-                   if doc_id not in result_dict:
-                       result_dict[doc_id] = 1
-                   else:
-                       result_dict[doc_id] += 1
+                    total_id += 1
+                    result_dict[doc_id] = result_dict.get(doc_id, 0) + 1
 
 
    scores = {}
@@ -126,8 +122,6 @@ def search(query, inverted_index, document_mapping, file_path):
    for i in range(len(sorted_doc_ids)):
        if unique_urls_printed >= 5:
            break
-
-
        doc_id = sorted_doc_ids[i]
        score = scores[doc_id]
        url = document_mapping.get(doc_id, f"URL not found for document {doc_id}")

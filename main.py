@@ -132,6 +132,13 @@ def read_mapping():
             url_mapping[int(line[0])] = line[1]
             line = file.readline()
 
+import psutil
+
+def get_memory_usage():
+    process = psutil.Process()
+    memory_info = process.memory_info()
+    return memory_info.rss  # Resident Set Size in bytes
+
 
 
 if __name__ == '__main__':
@@ -180,8 +187,9 @@ if __name__ == '__main__':
     while True:
         user_query = input("Enter your search query: ")
         starttime = time.time()
-        # print(inverted_index)
         result_documents = search.search(user_query, inverted_index,url_mapping, merged_output_path)    #result_documents = search.search(user_query, inverted_index)
         endtime = time.time()  
         runtime = endtime - starttime
         print(f'Search time: {runtime}')
+        memory_used = get_memory_usage()
+        print(f"Memory used: {memory_used} bytes")
