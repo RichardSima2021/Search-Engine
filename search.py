@@ -67,7 +67,11 @@ def search(query, inverted_index, document_mapping, file_path):
    if len(query_words) > 2:
        query_words = [word for word in query_words if word.lower() not in stop_words]
 
-   if all(word in stop_words for word in your_words)
+   if all(word in stop_words for word in query_words):
+      all_stop_words = True
+      temp_words = []
+      temp_words.append(query_words.pop())
+      query_words = temp_words
     # Initialize SpellChecker
    spell = SpellChecker()
 
@@ -107,7 +111,8 @@ def search(query, inverted_index, document_mapping, file_path):
                for doc_id in doc_ids:
                     total_id += 1
                     result_dict[doc_id] = result_dict.get(doc_id, 0) + 1
-               
+
+
    scores = {}
    for doc_id, doc_counts in result_dict.items():
 
