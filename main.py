@@ -6,6 +6,7 @@ from urllib.parse import urlparse, urlunparse
 import merge
 import search
 from bs4 import BeautifulSoup
+from nltk.stem import PorterStemmer
 import nltk
 nltk.download('punkt')
 from nltk.tokenize import word_tokenize
@@ -38,8 +39,19 @@ def parse_document(file):
         return [], ''
 
     soup = BeautifulSoup(content, "lxml")
+    
+    # obtaining important text
+    important_text = []
+    important_tags = ['b', 'strong', 'h1', 'h2', 'h3', 'title']
+    for tag in important_tags:
+        elements = soup.find_all(tag)
+        for element in elements:
+            important_text.append(element.get_text().lower())
+
 
     words = soup.get_text().lower()
+    for imp_text in important_text:
+        words += " " + imp_text
     stopword_set = set(stopwords.words('english'))
 
     words_list = word_tokenize(words)
@@ -91,7 +103,10 @@ def build_index(folder_path):
             print(doc_id, url)
             # print('--------------------------------')
 
+            # this is used to stem the word that to be included into the index
+            ps = PorterStemmer()
             for token in tokens:
+                token = ps.stem(token.lower())
                 if token not in inverted_index:
                     inverted_index[token] = []
 

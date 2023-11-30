@@ -60,9 +60,9 @@ def calculate_tf_idf(document_freq, total_documents, term_weight=1.0):
 
 def search(query, inverted_index, document_mapping, file_path):
    query_words = query.split()
+   ps = PorterStemmer()
 
-
-   query_words = {word.lower() for word in query_words}
+   query_words = {ps.stem(word.lower()) for word in query_words}
 
    if len(query_words) > 2:
        query_words = [word for word in query_words if word.lower() not in stop_words]
