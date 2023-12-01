@@ -1,3 +1,4 @@
+from difflib import SequenceMatcher
 import os
 import glob
 import json
@@ -99,6 +100,12 @@ def write_block(indices):
     output.close()
     block_id += 1
 
+def is_similar_url(new_url, url_list, similarity_threshold=0.94):
+    for url in url_list:
+        # Check if the new URL is too similar to any URL in the list
+        if SequenceMatcher(None, new_url, url).ratio() > similarity_threshold:
+            return True  # Return True if too similar
+    return False  # Return False if not too similar
 
 def build_index(folder_path):
     global url_mapping
@@ -109,8 +116,7 @@ def build_index(folder_path):
     current_batch = 1
     global doc_id
     global block_id
-
-
+    url_list = []
     for file_path in get_files_in_folder(folder_path):
         with open(file_path, 'r', encoding='utf-8') as file:
             file_name = os.path.splitext(os.path.basename(file_path))[0]
@@ -118,9 +124,18 @@ def build_index(folder_path):
 
             # build index 需要改的地方，for url
             tokens, url, word_count= parse_document(file)
-          
+            if not is_similar_url(url, url_list[-min(10, len(url_list)):]):
+                url_list.append(url)
+                # Keep only the most recent max_urls in the list
+                url_list = url_list[-10:]
+            else:
+                continue
+
             url_mapping[doc_id] = url
             url_length_mapping[doc_id] = word_count
+
+            
+
 
             if doc_id % 10 == 0:
                 print(doc_id, url)
@@ -133,7 +148,6 @@ def build_index(folder_path):
                 token = ps.stem(token.lower())
                 if token not in inverted_index:
                     inverted_index[token] = []
-
 
                 if token not in unique_words:
                     unique_words.add(token)
@@ -276,7 +290,7 @@ if __name__ == '__main__':
     while True:
         user_query = input("Enter your search query: ")
         starttime = time.time()
-        result_documents = search.search(user_query, inverted_index,url_mapping, merged_output_path)    #result_documents = search.search(user_query, inverted_index)
+        result_documents = search.search(user_query, inverted_index,url_mapping, url_length_mapping, merged_output_path)    #result_documents = search.search(user_query, inverted_index)
         endtime = time.time()  
         runtime = endtime - starttime
         print(f'Search time: {runtime}')

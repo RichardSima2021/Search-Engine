@@ -1,5 +1,6 @@
 import ast
 from collections import Counter, defaultdict
+import string
 import nltk
 from nltk.corpus import stopwords
 import math
@@ -40,10 +41,11 @@ def read_inverted_index_position(file_path):
 
 
 
-def calculate_tf_idf(document_freq, total_documents, term_weight=1.0):
-   tf = document_freq / total_documents
-   idf = math.log10(total_documents / document_freq)
+def calculate_tf_idf(a, b,c,d, term_weight=1.0):
+   tf = a / b
+   idf = math.log10(c / d)
    return tf * idf * term_weight
+
 
 
 
@@ -59,22 +61,26 @@ def calculate_tf_idf(document_freq, total_documents, term_weight=1.0):
 
 
 
-def search(query, inverted_index, document_mapping, file_path):
+def search(query, inverted_index, document_mapping,document_length_mapping, file_path):
    
    query_words = word_tokenize(query)
    ps = PorterStemmer()
    spell = SpellChecker()
    query_words = {spell.correction(word.lower()) if len(word) > 3 else word.lower() for word in query_words}
-
+   all_stop_words = False
    
 
-   if len(query_words) > 2:
-       if all(word in stop_words for word in query_words):
-          all_stop_words = True
-          temp_words = {word for word in query_words}
-          query_words = temp_words
-       else:
-           query_words = [word for word in query_words if word.lower() not in stop_words]
+   if all(word in stop_words for word in query_words):
+        all_stop_words = True
+        temp_words = {word for word in query_words}
+        if len(query_words) < 4:
+            temp = []
+            temp.append(temp_words.pop())
+            query_words = temp
+        else:
+            query_words = temp_words
+   else:
+        query_words = [word for word in query_words if word.lower() not in stop_words]
 
    
     # Initialize SpellChecker
@@ -91,42 +97,44 @@ def search(query, inverted_index, document_mapping, file_path):
    result_dict = {}
    total_id = 0
    common_doc_ids = set()  # Initialize an empty set for common document IDs
+   total_documents = len(document_mapping)
 
-
-   start_time = time.time()
    with open(file_path, 'r', encoding='utf-8') as file:
        for word in corrected_words:
            if word in inverted_index:
                file.seek(inverted_index[word])
-               print("Time after file.seek: " + str(time.time() - start_time))
                line = file.readline()
-               print("Time after readline: " + str(time.time() - start_time))
                word, ids_str = line.strip().split('\t')
-               print("Time after split: " + str(time.time() - start_time))
-               doc_ids = [int(part.strip()) for part in ids_str[1:-1].split(',') if part.strip()]
-               print("Time after regex split: " + str(time.time() - start_time))
+
+               if not all_stop_words:
+                    doc_ids = [int(part.strip()) for part in ids_str[1:-1].split(',') if part.strip()]
+               else:
+                   doc_ids = set(int(part.strip()) for part in ids_str[1:-1].split(',') if part.strip())
 
                if not common_doc_ids:
                     # If common_doc_ids is empty, add all document IDs for the first word
                     common_doc_ids.update(doc_ids)
-                    print("Time after update: " + str(time.time() - start_time))
                else:
                     # Update common_doc_ids with the intersection of current doc_ids
                     common_doc_ids.intersection_update(doc_ids)
-                    print("Time after intersection: " + str(time.time() - start_time))
                for doc_id in doc_ids:
                     total_id += 1
                     result_dict[doc_id] = result_dict.get(doc_id, 0) + 1
-               print("Time after result dictionary: " + str(time.time() - start_time))
-   print("Time after reading doc_ids: " + str(time.time() - start_time))
 
    scores = {}
    for doc_id, doc_counts in result_dict.items():
 
-       # Introduce a score for documents containing all query words
-       all_words_term = 1.2 if doc_id in common_doc_ids else 1.0
+       # Introduce a bonus score for documents containing all query words
+       all_words_term = 2.0 if doc_id in common_doc_ids else 1.0
+       word_in_doc_str = document_length_mapping.get(doc_id, f"word count not found for document {doc_id}")
+       word_in_doc = int(word_in_doc_str) if word_in_doc_str.isdigit() else 0
 
-       tf_idf_score = calculate_tf_idf(doc_counts, total_id, all_words_term)
+
+       #    print(f"Before calculation - doc_id: {doc_id}, doc_counts: {doc_counts}, word_in_doc: {word_in_doc}, total_documents: {total_documents}, total_id: {total_id}, all_words_term: {all_words_term}")
+
+
+       tf_idf_score = calculate_tf_idf(doc_counts, word_in_doc, total_documents, total_id, all_words_term)
+
 
        scores[doc_id] = tf_idf_score
 
