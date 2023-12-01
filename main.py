@@ -14,6 +14,7 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 nltk.download('stopwords')
 import time
+from spellchecker import SpellChecker
 
 
 develop = True
@@ -219,7 +220,54 @@ def get_memory_usage():
     memory_info = process.memory_info()
     return memory_info.rss  # Resident Set Size in bytes
 
+def replaceSpecialCharacters(queryString):
+    characterMapping = {
+        '.': ' dot ',
+        ',': ' comma ',
+        '?': ' question mark ',
+        '!': ' exclamation mark ',
+        ';': ' semicolon ',
+        ':': ' colon ',
+        '(': ' left parenthesis ',
+        ')': ' right parenthesis ',
+        '[': ' left square bracket ',
+        ']': ' right square bracket ',
+        '{': ' left curly brace ',
+        '}': ' right curly brace ',
+        '-': ' hyphen ',
+        '_': ' underscore ',
+        '\'': ' apostrophe ',
+        '"': ' quotation mark ',
+        '/': ' slash ',
+        '\\': ' backslash ',
+        '|': ' vertical bar ',
+        '@': ' at ',
+        '#': ' hashtag ',
+        '$': ' dollar ',
+        '%': ' percent ',
+        '^': ' caret ',
+        '&': ' ampersand ',
+        '*': ' asterisk ',
+        '+': ' plus sign',
+        '=': ' equal sign',
+        '<': ' less than ',
+        '>': ' greater than ',
+        '~': ' tilde ',
+        '`': ' backtick '
+    }
+    res = []
+    for c in queryString:
+        if c in characterMapping.keys():
+            res.append(characterMapping[c])
+        else:
+            res.append(c)
 
+    result_string = ''.join(res)
+    return result_string
+def printResults(resultDict):
+    for rank in resultDict.keys():
+        url, score = resultDict[rank]
+        print(f'Rank {rank}: {url} Score: {score}')
 
 
 
@@ -289,11 +337,37 @@ if __name__ == '__main__':
     runtime = endtime - starttime
     while True:
         user_query = input("Enter your search query: ")
+        user_query = replaceSpecialCharacters(user_query)
+        user_query_words = word_tokenize(user_query)
+        print(f'First round of query processing: {user_query_words}')
+        if len(user_query_words) == 0:
+            print(f'search must not be empty')
+            continue
         starttime = time.time()
-        result_documents = search.search(user_query, inverted_index,url_mapping, url_length_mapping, merged_output_path)    #result_documents = search.search(user_query, inverted_index)
+        result_documents, avg_score_orginal = search.search(user_query_words, inverted_index,url_mapping, url_length_mapping, merged_output_path)    #result_documents = search.search(user_query, inverted_index)
         endtime = time.time()  
         runtime = endtime - starttime
         print(f'Search time: {runtime}')
+        print(f'Avg score: {avg_score_orginal}')
+        printResults(result_documents)
+
+        corrected_start_time = time.time()
+        spell = SpellChecker()
+
+        corrected_query_words = list({spell.correction(word.lower()) if len(word) > 3 else word.lower() for word in user_query_words})
+        print(f'Corrected query words: {corrected_query_words}')
+
+        result_documents_corrected, avg_score_corrected = search.search(corrected_query_words, inverted_index,url_mapping, url_length_mapping, merged_output_path)
+
+        if len(result_documents.keys()) == 0 or avg_score_corrected > avg_score_orginal:
+            print(f'Did you mean {corrected_query_words}?')
+            print(f'Avg score: {avg_score_corrected}')
+            printResults(result_documents_corrected)
+
+            print(f'Suggestion time: {time.time() - corrected_start_time}')
+
+
+
         memory_used = get_memory_usage()
         print(f"Memory used: {memory_used} bytes")
 
