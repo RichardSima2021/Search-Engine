@@ -10,6 +10,7 @@ stop_words = set(stopwords.words('english'))
 from spellchecker import SpellChecker
 import time
 import re
+from nltk.tokenize import word_tokenize
 
 #: returned a dictionary of the inverted index
 def read_inverted_index(file_path):
@@ -59,24 +60,27 @@ def calculate_tf_idf(document_freq, total_documents, term_weight=1.0):
 
 
 def search(query, inverted_index, document_mapping, file_path):
-   query_words = query.split()
+   query_words = word_tokenize(query)
    ps = PorterStemmer()
+   spell = SpellChecker()
+   query_words = {spell.correction(word.lower()) if len(word) > 3 else word.lower() for word in query_words}
 
-   query_words = {ps.stem(word.lower()) for word in query_words}
+   
 
    if len(query_words) > 2:
-       query_words = [word for word in query_words if word.lower() not in stop_words]
+       if all(word in stop_words for word in query_words):
+          all_stop_words = True
+          temp_words = {word for word in query_words}
+          query_words = temp_words
+       else:
+           query_words = [word for word in query_words if word.lower() not in stop_words]
 
-   if all(word in stop_words for word in query_words):
-      all_stop_words = True
-      temp_words = []
-      temp_words.append(query_words.pop())
-      query_words = temp_words
+   
     # Initialize SpellChecker
-   spell = SpellChecker()
+   
 
     # Correct spelling for words in query_words
-   corrected_words = {spell.correction(word) for word in query_words}
+   corrected_words = {ps.stem(word) for word in query_words}
 
    
 
