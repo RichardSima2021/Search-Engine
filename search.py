@@ -1,5 +1,5 @@
 import ast
-from collections import Counter
+from collections import Counter, defaultdict
 import nltk
 from nltk.corpus import stopwords
 import math
@@ -60,6 +60,7 @@ def calculate_tf_idf(document_freq, total_documents, term_weight=1.0):
 
 
 def search(query, inverted_index, document_mapping, file_path):
+   
    query_words = word_tokenize(query)
    ps = PorterStemmer()
    spell = SpellChecker()
@@ -81,7 +82,6 @@ def search(query, inverted_index, document_mapping, file_path):
 
     # Correct spelling for words in query_words
    corrected_words = {ps.stem(word) for word in query_words}
-
    
 
 
@@ -93,29 +93,32 @@ def search(query, inverted_index, document_mapping, file_path):
    common_doc_ids = set()  # Initialize an empty set for common document IDs
 
 
-      
+   start_time = time.time()
    with open(file_path, 'r', encoding='utf-8') as file:
        for word in corrected_words:
            if word in inverted_index:
                file.seek(inverted_index[word])
-  
+               print("Time after file.seek: " + str(time.time() - start_time))
                line = file.readline()
-
+               print("Time after readline: " + str(time.time() - start_time))
                word, ids_str = line.strip().split('\t')
-
-               doc_ids = [int(part) for part in re.split(r'\D+', ids_str) if part]
-    
+               print("Time after split: " + str(time.time() - start_time))
+               doc_ids = [int(part.strip()) for part in ids_str[1:-1].split(',') if part.strip()]
+               print("Time after regex split: " + str(time.time() - start_time))
 
                if not common_doc_ids:
                     # If common_doc_ids is empty, add all document IDs for the first word
                     common_doc_ids.update(doc_ids)
+                    print("Time after update: " + str(time.time() - start_time))
                else:
                     # Update common_doc_ids with the intersection of current doc_ids
                     common_doc_ids.intersection_update(doc_ids)
+                    print("Time after intersection: " + str(time.time() - start_time))
                for doc_id in doc_ids:
                     total_id += 1
                     result_dict[doc_id] = result_dict.get(doc_id, 0) + 1
-
+               print("Time after result dictionary: " + str(time.time() - start_time))
+   print("Time after reading doc_ids: " + str(time.time() - start_time))
 
    scores = {}
    for doc_id, doc_counts in result_dict.items():
@@ -127,9 +130,7 @@ def search(query, inverted_index, document_mapping, file_path):
 
        scores[doc_id] = tf_idf_score
 
-
    sorted_doc_ids = sorted(scores, key=scores.get, reverse=True)
-
 
    unique_urls = set()
    unique_urls_printed = 0
@@ -147,4 +148,3 @@ def search(query, inverted_index, document_mapping, file_path):
            unique_urls.add(url)
            print(f"Rank: {unique_urls_printed + 1}, URL: {url}, Score: {score}")
            unique_urls_printed += 1
-
