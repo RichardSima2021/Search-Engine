@@ -142,6 +142,7 @@ def search(query, inverted_index, document_mapping,document_length_mapping, file
 
    unique_urls = set()
    unique_urls_printed = 0
+   result = {}
 
 
    for i in range(len(sorted_doc_ids)):
@@ -156,3 +157,6 @@ def search(query, inverted_index, document_mapping,document_length_mapping, file
            unique_urls.add(url)
            print(f"Rank: {unique_urls_printed + 1}, URL: {url}, Score: {score}")
            unique_urls_printed += 1
+           result[unique_urls_printed] = url
+    
+   return result
