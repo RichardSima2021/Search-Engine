@@ -41,7 +41,7 @@ def parse_document(file):
     content = data['content']
 
 
-    if data['encoding'] != 'utf-8':
+    if data['encoding'] != 'utf-8' and data['encoding'] != 'ascii':
         # not too sure what to do with non utf8 yet
         return [], '',0
 
@@ -121,8 +121,9 @@ def build_index(folder_path):
           
             url_mapping[doc_id] = url
             url_length_mapping[doc_id] = word_count
-            
-            print(doc_id, url)
+
+            if doc_id % 10 == 0:
+                print(doc_id, url)
             # print('--------------------------------')
 
 
