@@ -38,13 +38,16 @@
     <div class="search-container">
         <h1>Search Results for "{{ query }}"</h1>
         <ol>
-            {% for result in results %}
-            <li class ="list_item">{{ result }}</li>
+            {% for result, summary in result_summaries %}
+            <li class="list_item">
+                <p>{{ result }}</p>
+                <p><strong>Summary:</strong> {{ summary }}</p>
+            </li>
             {% endfor %}
         </ol>
 
         <h2>Summary for All Resulting Pages:</h2>
-        <p>{{ summaries }}</p>
+        <p>{{ all_summaries }}</p>
 
         <a href="{{url_for('index')}}"><button class="search-button"> Continue Search</button></a>
     </div>

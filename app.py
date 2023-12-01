@@ -94,18 +94,22 @@ def app_search():
         # print(text_content.strip())
         if text_content.strip() != '':
             summary = summarize_text([text_content])
-            summaries.append(summary)
+        else:
+            summary = ""
+        summaries.append(summary)
             # print(summary)
-        
-
     print("summaries list : ", summaries)
+
+    # Zip results and summaries for passing to the template
+    result_summaries = zip(results, summaries)
+
     # Generate a summary for all individual summaries
     if len(summaries) != 0:    
         all_summaries = summarize_text(summaries)
     else:
         all_summaries = 'URL contents are empty'
 
-    return render_template('search_results.html', query=query, results=results, summaries = all_summaries)
+    return render_template('search_results.html', query=query, result_summaries=result_summaries, all_summaries = all_summaries)
 
 if __name__ == '__main__':
     app.run(debug=True)
