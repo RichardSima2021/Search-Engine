@@ -2,12 +2,22 @@
 from flask import Flask, render_template, request
 import search
 from main import *
+from openai import OpenAI
+import requests
 
 app = Flask(__name__)
 index_blocks_path = './index-blocks'
 folder_path = 'DEV'
 
+client = OpenAI(api_key = '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',)
 
+
+def fetch_text_from_url(url):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    # Extract text content from the HTML, you may need to adjust this based on the structure of the webpage
+    text_content = ' '.join([p.get_text() for p in soup.find_all('p')])
+    return text_content
 
 def build_index_if_needed():
     # Set the path for storing index blocks
@@ -49,6 +59,19 @@ def build_index_if_needed():
 
     return merged_output_path, inverted_index
 
+def summarize_text(texts):
+    # Use OpenAI API for summarization
+    if texts != "":
+        prompt = "summarize\n".join(texts)
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=500  # Adjust as needed
+        )
+        return response.choices[0].message.content
+    return ""
+
+
 merged_output_path, inverted_index = build_index_if_needed()
 
 @app.route('/')
@@ -61,9 +84,28 @@ def app_search():
 
     # Use the search function from search.py
     results = [v for k, v in sorted(search.search(query, inverted_index,url_mapping, url_length_mapping, merged_output_path).items())]    #result_documents = search.search(user_query, inverted_index)
-    print(results)
+    # print(results)
 
-    return render_template('search_results.html', query=query, results=results)
+
+    # Fetch and summarize content from each URL
+    summaries = []
+    for url in results:
+        text_content = fetch_text_from_url(url)
+        # print(text_content.strip())
+        if text_content.strip() != '':
+            summary = summarize_text([text_content])
+            summaries.append(summary)
+            # print(summary)
+        
+
+    print("summaries list : ", summaries)
+    # Generate a summary for all individual summaries
+    if len(summaries) != 0:    
+        all_summaries = summarize_text(summaries)
+    else:
+        all_summaries = 'URL contents are empty'
+
+    return render_template('search_results.html', query=query, results=results, summaries = all_summaries)
 
 if __name__ == '__main__':
     app.run(debug=True)
