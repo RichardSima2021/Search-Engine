@@ -17,8 +17,7 @@ Installlments:
 - pip install openai
 
 Application:
-
-Run main.py to run search engine on console
-Run app.py to run the webUI.
-Go to localhost:5000/ on your web browser.
-Enter a query into the search bar and click search.
+- Run main.py to run search engine on console
+- Run app.py to run the webUI.
+- Go to localhost:5000/ on your web browser.
+- Enter a query into the search bar and click search.
