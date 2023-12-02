@@ -86,53 +86,52 @@ def index():
 def app_search():
     show_suggest = False
     query = request.args.get('q', '')
+    # clean up the query so it can be used by search()
     user_query = replaceSpecialCharacters(query)
     user_query_words = word_tokenize(user_query)
 
+    # whether we want to search with summary or not
     summarize = request.args.get('summarize', 'false') == 'true'
 
-    print(summarize)
 
     # Use the search function from search.py
-    # results = [v for k, v in sorted(search.search(query, inverted_index,url_mapping, url_length_mapping, merged_output_path).items())]    #result_documents = search.search(user_query, inverted_index)
-    # print(results)
 
+    # get result of searching with the user query
     result_documents, avg_score_orginal = search.search(user_query_words, inverted_index, url_mapping,
                                                         url_length_mapping,
                                                         merged_output_path)
 
-    # print(result_documents)
+
     resultTuples = [v for k, v in sorted(result_documents.items())]
-    # print(resultTuples)
+    # extract results
     results = [u for u,s in resultTuples]
 
+    # run a query with spell checked corrections
     spell = SpellChecker()
     corrected_query = [spell.correction(word.lower()) if len(word) > 3 else word.lower() for word in user_query_words]
     corrected_query_string = ' '.join(corrected_query)
-    # remove duplicate words
     corrected_query_words = list(set(corrected_query))
-    # corrected_query_words = list({spell.correction(word.lower()) if len(word) > 3 else word.lower() for word in user_query_words})
     result_documents_corrected, avg_score_corrected = search.search(corrected_query_words, inverted_index, url_mapping,
                                                                     url_length_mapping, merged_output_path)
     correctedResultTuples = [v for k, v in sorted(result_documents_corrected.items())]
     correctedResults = [u for u, s in correctedResultTuples]
-    # print(f"Corrected results: {correctedResults}")
 
-    print(f'Original score: {avg_score_orginal}, corrected score: {avg_score_corrected}')
-
+    # if original query returned no results, return the spellchecked result because the user probably made a typo
     if len(results) == 0:
         results = correctedResults
         query = corrected_query_string
-
+    # else if the avg score of the corrected query's results is higher than the original, suggest that query to the user
     elif avg_score_corrected > avg_score_orginal:
         show_suggest = True
         print(f'Did you mean {corrected_query_string}?')
 
 
-    # Fetch and summarize content from each URL
+
     summaries = ['','','','','']
 
+    # if option to search with summarize was selected
     if summarize:
+        # Fetch and summarize content from each URL
         summaries = []
         for url in results:
             text_content = fetch_text_from_url(url)
@@ -145,10 +144,10 @@ def app_search():
                 # print(summary)
         print("summaries list : ", summaries)
 
-        # Zip results and summaries for passing to the template
+    # Zip results and summaries for passing to the template
     result_summaries = zip(results, summaries)
 
-
+    # render the page and return it
     page = render_template('search_results.html', query=query, result_summaries=result_summaries, show_suggest = show_suggest, corrected_query = corrected_query_string, suggested_results = correctedResults, summarized = summarize)
 
     return page
