@@ -121,6 +121,8 @@ def search(query_words, inverted_index, document_mapping, document_length_mappin
     result = {}
 
     total_score = 0
+
+    print(f'Result set count: {len(sorted_doc_ids)}')
     for i in range(len(sorted_doc_ids)):
         if unique_urls_printed >= 5:
             break
