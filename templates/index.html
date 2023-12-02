@@ -35,17 +35,32 @@
             border: none;
             cursor: pointer;
         }
+
     </style>
 </head>
 
 <body>
-    <div class="search-container">
-        <h1>Welcome to My Search Engine</h1>
-        <form action="/search" method="get">
-            <input type="text" class="search-box" name="q" placeholder="Enter your search..." required>
-            <button type="submit" class="search-button">Search</button>
-        </form>
-    </div>
+<div class="search-container">
+    <h1>Welcome to My Search Engine</h1>
+    <form id="searchForm" action="/search" method="get">
+        <input type="text" class="search-box" name="q" placeholder="Enter your search..." required>
+        <input type="hidden" id="summarizeInput" name="summarize" value="False">
+
+        <!-- Search button -->
+        <button type="submit" class="search-button" onclick="setSummarize(false)">Search</button>
+
+        <!-- Search with Summary button -->
+        <button type="button" class="search-button" onclick="setSummarize(true)">I'm Feeling Lazy</button>
+    </form>
+
+    <script>
+        function setSummarize(value) {
+            document.getElementById("summarizeInput").value = value.toString();
+            document.getElementById("searchForm").submit();
+        }
+
+    </script>
+</div>
 </body>
 
 </html>

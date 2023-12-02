@@ -46,7 +46,9 @@
             {% for result, summary in result_summaries %}
             <li class="list_item">
                 <p>{{ result }}</p>
+                {% if summarized %}
                 <p><strong>Summary:</strong> {{ summary }}</p>
+                {% endif %}
             </li>
             {% endfor %}
         </ol>

@@ -89,7 +89,9 @@ def app_search():
     user_query = replaceSpecialCharacters(query)
     user_query_words = word_tokenize(user_query)
 
+    summarize = request.args.get('summarize', 'false') == 'true'
 
+    print(summarize)
 
     # Use the search function from search.py
     # results = [v for k, v in sorted(search.search(query, inverted_index,url_mapping, url_length_mapping, merged_output_path).items())]    #result_documents = search.search(user_query, inverted_index)
@@ -128,33 +130,26 @@ def app_search():
 
 
     # Fetch and summarize content from each URL
-    summaries = []
-    for url in results:
-        text_content = fetch_text_from_url(url)
-        # print(text_content.strip())
-        if text_content.strip() != '':
-            summary = summarize_text([text_content])
-        else:
-            summary = ""
-        summaries.append(summary)
-            # print(summary)
-    print("summaries list : ", summaries)
+    summaries = ['','','','','']
 
-    # Zip results and summaries for passing to the template
+    if summarize:
+        summaries = []
+        for url in results:
+            text_content = fetch_text_from_url(url)
+            # print(text_content.strip())
+            if text_content.strip() != '':
+                summary = summarize_text([text_content])
+            else:
+                summary = ""
+            summaries.append(summary)
+                # print(summary)
+        print("summaries list : ", summaries)
+
+        # Zip results and summaries for passing to the template
     result_summaries = zip(results, summaries)
 
-    # # Generate a summary for all individual summaries
-    # if len(summaries) != 0:
-    #     all_summaries = summarize_text(summaries)
-    # else:
-    #     all_summaries = 'URL contents are empty'
 
-    # summaries = ['a','a','a','a','a','a','a']
-    # result_summaries = zip(results, summaries)
-    # # result_summaries = []
-    # all_summaries = []
-
-    page = render_template('search_results.html', query=query, result_summaries=result_summaries, show_suggest = show_suggest, corrected_query = corrected_query_string, suggested_results = correctedResults)
+    page = render_template('search_results.html', query=query, result_summaries=result_summaries, show_suggest = show_suggest, corrected_query = corrected_query_string, suggested_results = correctedResults, summarized = summarize)
 
     return page
 
