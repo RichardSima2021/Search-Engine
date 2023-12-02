@@ -37,6 +37,11 @@
 <body>
     <div class="search-container">
         <h1>Search Results for "{{ query }}"</h1>
+
+        {% if show_suggest %}
+        <p>Did you mean<a href="{{ url_for('suggest_search', suggested_results=suggested_results, corrected_query=corrected_query) }}"> {{corrected_query}}</a>?</p>
+        {% endif %}
+
         <ol>
             {% for result, summary in result_summaries %}
             <li class="list_item">
@@ -45,6 +50,8 @@
             </li>
             {% endfor %}
         </ol>
+
+
 
         <h2>Summary for All Resulting Pages:</h2>
         <p>{{ all_summaries }}</p>

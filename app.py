@@ -4,6 +4,8 @@ import search
 from main import *
 from openai import OpenAI
 import requests
+from spellchecker import SpellChecker
+from nltk.tokenize import word_tokenize
 
 app = Flask(__name__)
 index_blocks_path = './index-blocks'
@@ -66,7 +68,7 @@ def summarize_text(texts):
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=500  # Adjust as needed
+            max_tokens=100  # Adjust as needed
         )
         return response.choices[0].message.content
     return ""
@@ -78,14 +80,61 @@ merged_output_path, inverted_index = build_index_if_needed()
 def index():
     return render_template('index.html')
 
+
+
 @app.route('/search', methods=['GET'])
 def app_search():
+    show_suggest = False
     query = request.args.get('q', '')
+    user_query = replaceSpecialCharacters(query)
+    user_query_words = word_tokenize(user_query)
+
+
 
     # Use the search function from search.py
-    results = [v for k, v in sorted(search.search(query, inverted_index,url_mapping, url_length_mapping, merged_output_path).items())]    #result_documents = search.search(user_query, inverted_index)
+    # results = [v for k, v in sorted(search.search(query, inverted_index,url_mapping, url_length_mapping, merged_output_path).items())]    #result_documents = search.search(user_query, inverted_index)
     # print(results)
 
+    result_documents, avg_score_orginal = search.search(user_query_words, inverted_index, url_mapping,
+                                                        url_length_mapping,
+                                                        merged_output_path)
+
+    # print(result_documents)
+    resultTuples = [v for k, v in sorted(result_documents.items())]
+    # print(resultTuples)
+    results = [u for u,s in resultTuples]
+
+    spell = SpellChecker()
+    corrected_query = [spell.correction(word.lower()) if len(word) > 3 else word.lower() for word in user_query_words]
+    corrected_query_string = ' '.join(corrected_query)
+    # remove duplicate words
+    corrected_query_words = list(set(corrected_query))
+    # corrected_query_words = list({spell.correction(word.lower()) if len(word) > 3 else word.lower() for word in user_query_words})
+    result_documents_corrected, avg_score_corrected = search.search(corrected_query_words, inverted_index, url_mapping,
+                                                                    url_length_mapping, merged_output_path)
+    correctedResultTuples = [v for k, v in sorted(result_documents_corrected.items())]
+    correctedResults = [u for u, s in correctedResultTuples]
+    # print(f"Corrected results: {correctedResults}")
+
+    print(f'Original score: {avg_score_orginal}, corrected score: {avg_score_corrected}')
+
+    if len(results) == 0:
+        results = correctedResults
+        query = corrected_query_string
+
+    elif avg_score_corrected > avg_score_orginal:
+        show_suggest = True
+        print(f'Did you mean {corrected_query_string}?')
+
+
+
+    # if show_suggest:
+    #     print(f'Did you mean {corrected_query_words}')
+
+    # results = [v for k, v in sorted(result_documents.items())] # result_documents = search.search(user_query, inverted_index)
+    # results = [url for k, v in sorted(result_documents.items()) for url, score in v]
+
+    # print(results)
 
     # Fetch and summarize content from each URL
     summaries = []
@@ -104,12 +153,33 @@ def app_search():
     result_summaries = zip(results, summaries)
 
     # Generate a summary for all individual summaries
-    if len(summaries) != 0:    
+    if len(summaries) != 0:
         all_summaries = summarize_text(summaries)
     else:
         all_summaries = 'URL contents are empty'
 
-    return render_template('search_results.html', query=query, result_summaries=result_summaries, all_summaries = all_summaries)
+    # summaries = ['a','a','a','a','a','a','a']
+    # result_summaries = zip(results, summaries)
+    # # result_summaries = []
+    # all_summaries = []
+
+    page = render_template('search_results.html', query=query, result_summaries=result_summaries, all_summaries = all_summaries, show_suggest = show_suggest, corrected_query = corrected_query_string, suggested_results = correctedResults)
+
+    return page
+
+
+@app.route('/suggest_search', methods=['GET'])
+def suggest_search():
+    # Get the suggested results from the query parameters
+    suggested_results = request.args.getlist('suggested_results')
+
+    # Other necessary data for rendering the template
+    query = request.args.get('corrected_query')
+
+    # Render the suggest.html template with the suggested results
+    page = render_template('suggest.html', query=query, suggested_results=suggested_results)
+
+    return page
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)

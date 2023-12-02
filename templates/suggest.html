@@ -1,10 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suggested Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .res-container {
+            text-align: center;
+        }
+        .search-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .list_item {
+            margin-bottom: 10px;
+        }
+
+    </style>
 </head>
+
 <body>
-$END$
+<div class="res-container">
+    <h1>Suggested Search Results for "{{ query }}"</h1>
+    <ol>
+        {% for result in suggested_results %}
+        <li>{{ result }}</li>
+        {% endfor %}
+    </ol>
+    <a href="{{url_for('index')}}">
+        <button class="search-button"> Continue Search</button>
+    </a>
+</div>
+
+<!-- Other content for suggest.html -->
 </body>
+
 </html>
