@@ -264,7 +264,7 @@ if __name__ == '__main__':
         # Perform binary merge on the index block files
         merge.binary_merge(index_files)
 
-    print("Inverted index found or built"
+    print("Inverted index found or built")
 
     if not os.path.exists("./document_mapping.txt"):
         # if document mapping doesn't exist, write it
