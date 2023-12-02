@@ -1,0 +1,23 @@
+Well:
+1. Information Retrieval
+2. ACM
+3. 1 2 3 4 5 6
+4. i have a lot of word here to test out my search time
+5. William Shakespeare
+6. ics 31
+7. whoa
+8. whyyyyyyyyyyyy
+9. !
+10. and
+
+Poor:
+1. pyhton is cool - Ranking performance: The problem is the spell error, we implemented spell check layer to compare the result of the return url score would be better is the query is spell checked
+2. 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1  - Run time performance: Long list of common term. Handled by loop filter query terms with set to be unique
+3. and and and and and and and: Long list of stop word would bypass our length requirement we removing stop words and return is empty. We added a checking layer for query with all word being stop words 
+4. nice! - words with punctuation are handeled be seperating the punctuation
+5. 12/1/2023 - no output for dates, handled with converting to numbers: 12,1,2023, and slash
+6. $400 - no output for values, handled with converting to 400 dollar
+7. @home - No output for word with special characters. Replaced non alphanumeric characters with their names in english, i.e @ -> “at”
+8. to be or not to be - run time nightmare, inverted index optimization
+9.  MAcHiNe LeArNIng - handeled with lower capitalization
+10. lived living live lives - ranking performance and run time performance: Fixed with storing word in stemmed form and search stemmed word.
