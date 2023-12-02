@@ -10,10 +10,6 @@ from nltk.stem import PorterStemmer
 
 nltk.download('stopwords')
 stop_words = set(stopwords.words('english'))
-from spellchecker import SpellChecker
-import time
-import re
-from nltk.tokenize import word_tokenize
 
 
 #: returned a dictionary of the inverted index
@@ -49,16 +45,6 @@ def calculate_tf_idf(a, b, c, d, term_weight=1.0):
     return tf * idf * term_weight
 
 
-# def determine_important_words(query):
-#     stop_words = set(stopwords.words('english'))
-#     ps = PorterStemmer()
-
-#     words = query.split()
-#     important_words = {ps.stem(word.lower()) for word in words if word.lower() not in stop_words}
-
-#     return important_words
-
-
 def search(query_words, inverted_index, document_mapping, document_length_mapping, file_path):
     # query_words = word_tokenize(query)
     ps = PorterStemmer()
@@ -83,7 +69,7 @@ def search(query_words, inverted_index, document_mapping, document_length_mappin
     query_stem_words = {ps.stem(word) for word in query_words}
 
 
-    print(f"Query stem words with stopword filtering: {query_stem_words}")
+    # print(f"Query stem words with stopword filtering: {query_stem_words}")
 
     # corrected_words = {spell.correction(word.lower()) if len(word) > 3 else word.lower() for word in query_words}
 

@@ -339,7 +339,7 @@ if __name__ == '__main__':
         user_query = input("Enter your search query: ")
         user_query = replaceSpecialCharacters(user_query)
         user_query_words = word_tokenize(user_query)
-        print(f'First round of query processing: {user_query_words}')
+        # print(f'First round of query processing: {user_query_words}')
         if len(user_query_words) == 0:
             print(f'search must not be empty')
             continue
@@ -348,23 +348,27 @@ if __name__ == '__main__':
         endtime = time.time()  
         runtime = endtime - starttime
         print(f'Search time: {runtime}')
-        print(f'Avg score: {avg_score_orginal}')
+        # print(f'Avg score: {avg_score_orginal}')
         printResults(result_documents)
 
         corrected_start_time = time.time()
         spell = SpellChecker()
 
         corrected_query_words = list({spell.correction(word.lower()) if len(word) > 3 else word.lower() for word in user_query_words})
-        print(f'Corrected query words: {corrected_query_words}')
 
-        result_documents_corrected, avg_score_corrected = search.search(corrected_query_words, inverted_index,url_mapping, url_length_mapping, merged_output_path)
+        corrected_query_words = [value for value in corrected_query_words if value is not None]
 
-        if len(result_documents.keys()) == 0 or avg_score_corrected > avg_score_orginal:
-            print(f'Did you mean {corrected_query_words}?')
-            print(f'Avg score: {avg_score_corrected}')
-            printResults(result_documents_corrected)
+        # print(f'Corrected query words: {corrected_query_words}')
 
-            print(f'Suggestion time: {time.time() - corrected_start_time}')
+        if len(corrected_query_words):
+            result_documents_corrected, avg_score_corrected = search.search(corrected_query_words, inverted_index,url_mapping, url_length_mapping, merged_output_path)
+
+            if len(result_documents.keys()) == 0 or avg_score_corrected > avg_score_orginal:
+                print(f'Did you mean {corrected_query_words}?')
+                # print(f'Avg score: {avg_score_corrected}')
+                printResults(result_documents_corrected)
+
+                print(f'Suggestion time: {time.time() - corrected_start_time}')
 
 
 
