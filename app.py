@@ -127,15 +127,6 @@ def app_search():
         print(f'Did you mean {corrected_query_string}?')
 
 
-
-    # if show_suggest:
-    #     print(f'Did you mean {corrected_query_words}')
-
-    # results = [v for k, v in sorted(result_documents.items())] # result_documents = search.search(user_query, inverted_index)
-    # results = [url for k, v in sorted(result_documents.items()) for url, score in v]
-
-    # print(results)
-
     # Fetch and summarize content from each URL
     summaries = []
     for url in results:
@@ -152,18 +143,18 @@ def app_search():
     # Zip results and summaries for passing to the template
     result_summaries = zip(results, summaries)
 
-    # Generate a summary for all individual summaries
-    if len(summaries) != 0:
-        all_summaries = summarize_text(summaries)
-    else:
-        all_summaries = 'URL contents are empty'
+    # # Generate a summary for all individual summaries
+    # if len(summaries) != 0:
+    #     all_summaries = summarize_text(summaries)
+    # else:
+    #     all_summaries = 'URL contents are empty'
 
     # summaries = ['a','a','a','a','a','a','a']
     # result_summaries = zip(results, summaries)
     # # result_summaries = []
     # all_summaries = []
 
-    page = render_template('search_results.html', query=query, result_summaries=result_summaries, all_summaries = all_summaries, show_suggest = show_suggest, corrected_query = corrected_query_string, suggested_results = correctedResults)
+    page = render_template('search_results.html', query=query, result_summaries=result_summaries, show_suggest = show_suggest, corrected_query = corrected_query_string, suggested_results = correctedResults)
 
     return page
 
